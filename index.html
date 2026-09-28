@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Mapa Mental Privado</title>
+    <!-- Biblioteca que desenha o mapa na tela -->
+    <script type="text/javascript" src="https://unpkg.com"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        /* Painel Superior Profissional */
+        #header {
+            background-color: #1e1e2f;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            height: 75px;
+            width: 100%;
+            z-index: 100;
+        }
+        h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .divisor {
+            width: 1px;
+            height: 30px;
+            background-color: #3d3d5c;
+            margin: 0 5px;
+        }
+        .grupo-controle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #a0a0b0;
+            font-weight: bold;
+        }
+        /* Inputs e Controles */
+        input, select {
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #3d3d5c;
+            background-color: #2b2b3d;
+            color: white;
+            font-size: 14px;
+            outline: none;
+        }
+        input { width: 180px; }
+        select { cursor: pointer; }
+        
+        /* Botões */
+        button {
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        button.add { background-color: #2ecc71; color: white; }
+        button.add:hover { background-color: #27ae60; transform: translateY(-1px); }
+        
+        button.edit { background-color: #3498db; color: white; }
+        button.edit:hover { background-color: #2980b9; transform: translateY(-1px); }
+        
+        button.delete { background-color: #e74c3c; color: white; }
+        button.delete:hover { background-color: #c0392b; transform: translateY(-1px); }
+
+        /* Tela do Mapa */
+        #mapa-container {
+            flex: 1;
+            width: 100%;
+            background-color: #ffffff; /* Cor padrão inicial */
+            background-image: radial-gradient(rgba(0,0,0,0.1) 1px, transparent 1px);
+            background-size: 25px 25px;
+            transition: background-color 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="header">
+        <h2>🧠 Mapa Creator</h2>
+        <div class="divisor"></div>
+        
+        <!-- Criar Tópicos -->
+        <input type="text" id="texto-no" placeholder="Nome do novo plano...">
+        
+        <!-- Seletor de Cores do Tópico -->
+        <div class="grupo-controle">
+            <span>Borda:</span>
+            <select id="cor-seletor">
+                <option value="#3498db" style="color: #3498db; font-weight: bold;">Azul</option>
+                <option value="#2ecc71" style="color: #2ecc71; font-weight: bold;">Verde</option>
+                <option value="#e67e22" style="color: #e67e22; font-weight: bold;">Laranja</option>
+                <option value="#9b59b6" style="color: #9b59b6; font-weight: bold;">Roxo</option>
+                <option value="#e74c3c" style="color: #e74c3c; font-weight: bold;">Vermelho</option>
+                <option value="#f1c40f" style="color: #f1c40f; font-weight: bold;">Amarelo</option>
+                <option value="#1abc9c" style="color: #1abc9c; font-weight: bold;">Ciano</option>
+                <option value="#34495e" style="color: #34495e; font-weight: bold;">Grafite</option>
+            </select>
+        </div>
+        
+        <button class="add" onclick="adicionarNo()">➕ Adicionar</button>
+        
+        <div class="divisor"></div>
+
+        <!-- Seletor de Mudar a Cor do Fundo -->
+        <div class="grupo-controle">
+            <span>🎨 Fundo:</span>
+            <select id="fundo-seletor" onchange="mudarCorFundo()">
+                <option value="#ffffff">Claro (Branco)</option>
+                <option value="#f4f7f6">Cinza Claro</option>
+                <option value="#e8f4fd">Azul Soft</option>
+                <option value="#1e1e2f">Escuro (Dark)</option>
+                <option value="#111116">Preto Total</option>
+                <option value="#2c3e50">Azul Petróleo</option>
+            </select>
+        </div>
+
+        <div class="divisor"></div>
+        
+        <!-- Editar Tópicos Existentes -->
+        <button class="edit" onclick="editarNo()">✏️ Renomear</button>
+        <button class="delete" onclick="removerNo()">❌ Apagar</button>
+    </div>
+
+    <!-- Container do Mapa -->
+    <div id="mapa-container"></div>
+
+    <script>
+        // Inicializa com o nó do centro
+        let nodes = new vis.DataSet([
+            { 
+                id: 1, 
+                label: ' ESTUDOS ', 
+                color: { background: '#2c3e50', border: '#2c3e50' }, 
+                font: { color: '#ffffff', size: 20, bold: true }, 
+                shape: 'box',
+                margin: 15
+            }
+        ]);
+
+        let edges = new vis.DataSet([]);
+        let container = document.getElementById('mapa-container');
+        let data = { nodes: nodes, edges: edges };
+        
+        // Estilos de design do mapa
+        let options = {
+            nodes: {
+                shape: 'box',
+                borderRadius: 10,
+                margin: 12,
+                font: { size: 15, color: '#2c3e50', face: 'Segoe UI', bold: true },
+                borderWidth: 3,
+                shadow: { enabled: true, color: 'rgba(0,0,0,0.08)', size: 6, x: 0, y: 3 }
+            },
+            edges: {
+                width: 3,
+                smooth: { type: 'cubicBezier', forceDirection: 'horizontal' }
+            },
+            physics: {
+                enabled: true,
+                solver: 'barnesHut',
+                barnesHut: {
+                    gravitationalConstant: -2000,
+                    springLength: 100,
+                    springConstant: 0.04
+                }
+            },
+            interaction: { hover: true, dragNodes: true, dragView: true, zoomView: true }
+        };
+
+        let network = new vis.Network(container, data, options);
+        let proximoId = 2;
+
+        // Função para Adicionar nós com cores personalizadas
+        function adicionarNo() {
+            let texto = document.getElementById('texto-no').value;
+            let corEscolhida = document.getElementById('cor-seletor').value;
+            
+            if (texto.trim() === "") return alert("Digite um texto para o balão!");
+
+            let selecionado = network.getSelectedNodes();
+            if (selecionado.length === 0) {
+                return alert("Clique em um balão na tela para conectá-lo ao seu novo tópico!");
+            }
+
+            let paiId = selecionado;
+
+            nodes.add({ 
+                id: proximoId, 
+                label: ' ' + texto + ' ',
+                color: { 
+                    border: corEscolhida, 
+                    background: '#ffffff',
+                    highlight: { border: corEscolhida, background: '#f5f5f5' }
+                }
+            });
+            
+            edges.add({ from: paiId, to: proximoId, color: { color: corEscolhida, highlight: corEscolhida } });
+
+            proximoId++;
+            document.getElementById('texto-no').value = "";
+        }
+
+        // Nova Função: Muda a cor do fundo e ajusta os pontinhos da grade
+        function mudarCorFundo() {
+            let corFundo = document.getElementById('fundo-seletor').value;
+            let containerElement = document.getElementById('mapa-container');
+            
+            // Aplica a cor selecionada
+            containerElement.style.backgroundColor = corFundo;
+            
+            // Se o fundo for escuro, muda a cor dos pontos da grade para branco translúcido
+            if (corFundo === "#1e1e2f" || corFundo === "#111116" || corFundo === "#2c3e50") {
+                containerElement.style.backgroundImage = "radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px)";
+            } else {
+                containerElement.style.backgroundImage = "radial-gradient(rgba(0,0,0,0.1) 1px, transparent 1px)";
+            }
+        }
+
+        // Função para editar o texto de qualquer balão
+        function editarNo() {
+            let selecionado = network.getSelectedNodes();
+            if (selecionado.length === 0) return alert("Clique primeiro no balão que você quer editar!");
+            
+            let noId = selecionado;
+            let noAtual = nodes.get(noId);
+            
+            let novoTexto = prompt("Digite o novo nome para este balão:", noAtual.label.trim());
+            if (novoTexto === null || novoTexto.trim() === "") return;
+            
+            nodes.update({ id: noId, label: ' ' + novoTexto + ' ' });
+        }
+
+        // Função para apagar tópicos
+        function removerNo() {
+            let selecionado = network.getSelectedNodes();
+            if (selecionado.length === 0) return alert("Clique no balão que quer apagar!");
+            if (selecionado === 1) return alert("Você não pode apagar o seu ponto central!");
+            
+            nodes.remove({ id: selecionado });
+        }
