@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MindMap Pro AI - Criador de Mapas Mentais com Inteligência Artificial</title>
+    <title>MindMap Pro - Criador de Mapas Mentais</title>
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -27,13 +27,6 @@
                             500: '#0ea5e9',
                             600: '#0284c7',
                             700: '#0369a1',
-                        },
-                        ai: {
-                            50: '#f5f3ff',
-                            100: '#ede9fe',
-                            500: '#8b5cf6',
-                            600: '#7c3aed',
-                            700: '#6d28d9',
                         }
                     }
                 }
@@ -69,14 +62,15 @@
             box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.5), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
-        .mindnode.ai-generating {
-            animation: pulseGlow 1.5s infinite ease-in-out;
+        .mindnode [contenteditable="true"] {
+            user-select: text;
+            cursor: text;
         }
 
-        @keyframes pulseGlow {
-            0% { box-shadow: 0 0 0 0px rgba(139, 92, 246, 0.6); }
-            50% { box-shadow: 0 0 0 10px rgba(139, 92, 246, 0); }
-            100% { box-shadow: 0 0 0 0px rgba(139, 92, 246, 0.6); }
+        .mindnode [contenteditable="true"]:focus {
+            outline: 2px solid #0ea5e9;
+            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.15);
         }
 
         ::-webkit-scrollbar {
@@ -109,24 +103,17 @@
     <!-- Navbar Superior -->
     <header class="h-14 bg-white border-b border-slate-200 px-4 flex items-center justify-between z-20 shadow-sm gap-2">
         <div class="flex items-center gap-3">
-            <div class="bg-gradient-to-r from-ai-600 to-brand-600 text-white p-2 rounded-lg flex items-center justify-center shadow-md">
-                <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
+            <div class="bg-brand-600 text-white p-2 rounded-lg flex items-center justify-center shadow-md">
+                <i class="fa-solid fa-sitemap text-lg"></i>
             </div>
             <div>
                 <input id="map-title" type="text" value="Meu Mapa Mental" class="font-bold text-slate-800 text-sm md:text-base bg-transparent border-b border-transparent hover:border-slate-300 focus:border-brand-500 focus:outline-none px-1 transition-all" />
-                <p class="text-[10px] md:text-xs text-slate-400 px-1 hidden sm:block">Gerado & Salvo no navegador</p>
+                <p class="text-[10px] md:text-xs text-slate-400 px-1 hidden sm:block">Salvo no navegador</p>
             </div>
         </div>
 
-        <!-- Ações do Mapa & Ações de IA -->
+        <!-- Ações do Mapa -->
         <div class="flex items-center gap-1.5 md:gap-2">
-            <button id="btn-ai-generate-map" title="Gerar Mapa Completo com Inteligência Artificial" class="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-ai-600 to-brand-600 hover:from-ai-700 hover:to-brand-700 text-white text-xs font-semibold rounded-lg transition-all shadow-md hover:shadow-lg transform active:scale-95">
-                <i class="fa-solid fa-bolt"></i> <span class="hidden sm:inline">Gerar Mapa IA</span>
-            </button>
-
-            <div class="h-6 w-px bg-slate-200 mx-0.5"></div>
-
-            <!-- Botão Adicionar Nó Principal (NOVO) -->
             <button id="btn-add-root" title="Adicionar Novo Balão Principal" class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm">
                 <i class="fa-solid fa-star"></i> <span class="hidden md:inline">Balão Principal</span>
             </button>
@@ -173,7 +160,7 @@
         <svg id="svg-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-0" style="transform-origin: 0 0;">
             <defs>
                 <linearGradient id="line-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stop-color="#8b5cf6" />
+                    <stop offset="0%" stop-color="#6366f1" />
                     <stop offset="100%" stop-color="#0ea5e9" />
                 </linearGradient>
             </defs>
@@ -181,25 +168,10 @@
 
         <div id="mindmap-container" class="absolute inset-0 z-10 bg-grid-dots transition-none" style="transform-origin: 0 0; transform: translate(0px, 0px) scale(1);"></div>
 
-        <div id="node-ai-toolbar" class="absolute top-4 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md border border-ai-100 shadow-xl rounded-2xl p-1.5 z-20 flex items-center gap-1 transition-all duration-300 opacity-0 pointer-events-none transform -translate-y-2">
-            <span class="text-[11px] font-bold text-ai-700 px-2 flex items-center gap-1 border-r border-slate-100">
-                <i class="fa-solid fa-sparkles text-ai-500"></i> Ações IA:
-            </span>
-            <button id="btn-ai-expand" title="Gerar Subtópicos e Ideias com IA" class="flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-ai-50 text-slate-700 hover:text-ai-700 text-xs font-medium rounded-xl transition">
-                <i class="fa-solid fa-diagram-next text-ai-600"></i> Expandir
-            </button>
-            <button id="btn-ai-explain" title="Gerar Explicação Detalhada do Tópico" class="flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-ai-50 text-slate-700 hover:text-ai-700 text-xs font-medium rounded-xl transition">
-                <i class="fa-solid fa-book-open text-ai-600"></i> Explicar
-            </button>
-            <button id="btn-ai-image" title="Gerar Ilustração/Imagem para o Nó" class="flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-ai-50 text-slate-700 hover:text-ai-700 text-xs font-medium rounded-xl transition">
-                <i class="fa-solid fa-image text-ai-600"></i> Imagem IA
-            </button>
-        </div>
-
         <div class="absolute bottom-4 left-4 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-xl p-2.5 shadow-md z-20 hidden md:flex items-center gap-4 text-xs text-slate-600">
+            <div><kbd class="px-1.5 py-0.5 bg-slate-100 border rounded font-mono">Clique no Balão</kbd> Para Escrever</div>
             <div><kbd class="px-1.5 py-0.5 bg-slate-100 border rounded font-mono">Tab</kbd> Criar Filho</div>
             <div><kbd class="px-1.5 py-0.5 bg-slate-100 border rounded font-mono">Enter</kbd> Criar Irmão</div>
-            <div><kbd class="px-1.5 py-0.5 bg-slate-100 border rounded font-mono">Dbl Click</kbd> Editar</div>
             <div><kbd class="px-1.5 py-0.5 bg-slate-100 border rounded font-mono">Del</kbd> Excluir</div>
         </div>
     </div>
@@ -239,10 +211,6 @@
                 <button id="btn-toggle-bold" class="flex-1 py-1.5 border border-slate-200 rounded text-xs font-bold text-slate-700 hover:bg-slate-50 transition">Negrito (B)</button>
                 <button id="btn-toggle-italic" class="flex-1 py-1.5 border border-slate-200 rounded text-xs italic text-slate-700 hover:bg-slate-50 transition">Itálico (I)</button>
             </div>
-
-            <button id="btn-remove-node-image" class="w-full py-1.5 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded text-xs font-semibold transition flex items-center justify-center gap-1.5 hidden">
-                <i class="fa-solid fa-image-slash"></i> Remover Imagem Anexada
-            </button>
         </div>
 
         <div class="flex flex-col gap-3 border-t pt-4">
@@ -284,129 +252,6 @@
         </div>
     </aside>
 
-    <!-- Modal 1: Editar Texto -->
-    <div id="modal-edit" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl border border-slate-100 p-5 w-full max-w-md animate-pop">
-            <h3 class="font-bold text-slate-800 text-sm mb-3">Editar Texto do Balão</h3>
-            <textarea id="modal-text-input" rows="3" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-brand-500 mb-4"></textarea>
-            <div class="flex justify-end gap-2">
-                <button id="btn-cancel-modal" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
-                <button id="btn-save-modal" class="px-4 py-2 text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white rounded-lg">Salvar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal 2: Gerar Mapa IA -->
-    <div id="modal-ai-map" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl border border-ai-100 p-6 w-full max-w-lg animate-pop flex flex-col gap-4">
-            <div class="flex items-center justify-between border-b pb-3">
-                <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
-                    <i class="fa-solid fa-wand-magic-sparkles text-ai-600"></i> Gerar Mapa Mental com IA
-                </h3>
-                <button id="btn-close-modal-ai-map" class="text-slate-400 hover:text-slate-600 p-1">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-            
-            <p class="text-xs text-slate-600 leading-relaxed">
-                Digite um tema, plano de estudo, projeto ou conceito. A Inteligência Artificial Gemini irá estruturar um mapa mental completo para você em segundos!
-            </p>
-
-            <div>
-                <label class="text-xs font-semibold text-slate-700 block mb-1">Qual o assunto ou objetivo?</label>
-                <input id="input-ai-prompt" type="text" placeholder="Ex: Plano de Estudos de Programação Python do Zero" class="w-full p-3 text-sm border border-slate-300 rounded-xl focus:outline-none focus:border-ai-500 bg-slate-50 focus:bg-white transition" />
-            </div>
-
-            <div class="flex flex-wrap gap-1.5">
-                <span class="text-[11px] text-slate-400 self-center">Exemplos:</span>
-                <button class="ai-chip text-[11px] bg-ai-50 hover:bg-ai-100 text-ai-700 px-2.5 py-1 rounded-full transition">Planejamento Financeiro 2026</button>
-                <button class="ai-chip text-[11px] bg-ai-50 hover:bg-ai-100 text-ai-700 px-2.5 py-1 rounded-full transition">Lançamento de Produto SaaS</button>
-                <button class="ai-chip text-[11px] bg-ai-50 hover:bg-ai-100 text-ai-700 px-2.5 py-1 rounded-full transition">Biologia: Fotossíntese e Células</button>
-            </div>
-
-            <div id="ai-map-status" class="hidden text-xs py-2 px-3 bg-ai-50 text-ai-700 rounded-xl flex items-center gap-2">
-                <i class="fa-solid fa-spinner fa-spin"></i> <span>A IA está gerando e organizando seu mapa mental...</span>
-            </div>
-
-            <div class="flex justify-end gap-2 pt-2 border-t">
-                <button id="btn-cancel-ai-map" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
-                <button id="btn-submit-ai-map" class="px-5 py-2 text-xs font-semibold bg-gradient-to-r from-ai-600 to-brand-600 hover:from-ai-700 hover:to-brand-700 text-white rounded-lg flex items-center gap-2 shadow-md">
-                    <i class="fa-solid fa-sparkles"></i> Gerar Mapa
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal 3: Explicação IA -->
-    <div id="modal-ai-explain" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 p-6 w-full max-w-xl animate-pop flex flex-col gap-4 max-h-[85vh]">
-            <div class="flex items-center justify-between border-b pb-3">
-                <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
-                    <i class="fa-solid fa-book-open text-ai-600"></i> <span id="explain-title">Explicação IA</span>
-                </h3>
-                <button id="btn-close-modal-explain" class="text-slate-400 hover:text-slate-600 p-1">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-
-            <div id="explain-loading" class="py-12 flex flex-col items-center justify-center gap-3 text-slate-500">
-                <i class="fa-solid fa-circle-notch fa-spin text-3xl text-ai-600"></i>
-                <p class="text-xs">Consultando o Gemini para gerar um resumo explicativo...</p>
-            </div>
-
-            <div id="explain-content" class="text-sm text-slate-700 overflow-y-auto leading-relaxed space-y-3 p-1 hidden"></div>
-
-            <div class="flex justify-between items-center gap-2 pt-3 border-t">
-                <button id="btn-convert-explain-to-nodes" class="px-3 py-2 text-xs font-semibold bg-ai-50 hover:bg-ai-100 text-ai-700 rounded-lg flex items-center gap-1.5 hidden">
-                    <i class="fa-solid fa-sitemap"></i> Converter tópicos em Nós Filhos
-                </button>
-                <button id="btn-close-explain-modal" class="px-4 py-2 text-xs font-semibold bg-slate-800 hover:bg-slate-900 text-white rounded-lg ml-auto">
-                    Fechar
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal 4: Imagem IA -->
-    <div id="modal-ai-image" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 p-6 w-full max-w-md animate-pop flex flex-col gap-4">
-            <div class="flex items-center justify-between border-b pb-3">
-                <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
-                    <i class="fa-solid fa-image text-ai-600"></i> Gerar Imagem para o Balão
-                </h3>
-                <button id="btn-close-modal-image" class="text-slate-400 hover:text-slate-600 p-1">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-
-            <div>
-                <label class="text-xs font-semibold text-slate-700 block mb-1">Descrição do Ícone / Imagem</label>
-                <input id="input-image-prompt" type="text" placeholder="Ex: Ícone minimalista 3D de um livro aberto com luz neon" class="w-full p-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:border-ai-500" />
-            </div>
-
-            <div id="image-gen-preview" class="w-full h-48 bg-slate-100 rounded-xl flex flex-col items-center justify-center border border-dashed border-slate-300 relative overflow-hidden">
-                <span id="image-placeholder-text" class="text-xs text-slate-400 flex flex-col items-center gap-1">
-                    <i class="fa-regular fa-image text-2xl"></i> A prévia da imagem aparecerá aqui
-                </span>
-                <img id="generated-img-preview" class="w-full h-full object-contain hidden" alt="Prévia da IA" />
-                <div id="image-loading-overlay" class="absolute inset-0 bg-white/80 backdrop-blur-xs flex flex-col items-center justify-center gap-2 hidden">
-                    <i class="fa-solid fa-spinner fa-spin text-2xl text-ai-600"></i>
-                    <p class="text-xs font-medium text-slate-600">Gerando imagem com Gemini...</p>
-                </div>
-            </div>
-
-            <div class="flex justify-end gap-2 pt-2 border-t">
-                <button id="btn-cancel-image" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
-                <button id="btn-generate-image-action" class="px-4 py-2 text-xs font-semibold bg-ai-600 hover:bg-ai-700 text-white rounded-lg flex items-center gap-1.5">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i> Gerar
-                </button>
-                <button id="btn-attach-image" class="px-4 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-1.5 hidden">
-                    <i class="fa-solid fa-check"></i> Usar Imagem
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- Toast Dialog -->
     <div id="modal-toast-dialog" class="fixed bottom-5 right-5 bg-slate-900 text-white text-xs px-4 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-3 transition-all duration-300 transform translate-y-10 opacity-0 pointer-events-none">
         <i id="toast-icon" class="fa-solid fa-info-circle text-brand-500 text-base"></i>
@@ -425,36 +270,13 @@
             draggedNodeId: null,
             dragOffset: { x: 0, y: 0 },
             canvasBgColor: '#f1f5f9',
-            gridStyle: 'dots',
-            lastGeneratedExplanation: null,
-            tempGeneratedImageData: null
+            gridStyle: 'dots'
         };
 
         const viewport = document.getElementById('viewport');
         const container = document.getElementById('mindmap-container');
         const svgCanvas = document.getElementById('svg-canvas');
         const sidebar = document.getElementById('sidebar');
-        const aiToolbar = document.getElementById('node-ai-toolbar');
-
-        async function callGeminiApi(url, payload, retries = 3, delay = 1000) {
-            const apiKey = "";
-            const fullUrl = `${url}?key=${apiKey}`;
-
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const response = await fetch(fullUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    if (response.ok) return await response.json();
-                } catch (err) {
-                    console.debug("Tentativa Gemini falhou...", err);
-                }
-                if (i < retries - 1) await new Promise(res => setTimeout(res, delay * Math.pow(2, i)));
-            }
-            throw new Error("Não foi possível conectar com o serviço de IA no momento.");
-        }
 
         window.onload = function () {
             loadSavedState();
@@ -471,12 +293,11 @@
                     text: 'Ideia Central',
                     x: window.innerWidth / 2 - 80,
                     y: window.innerHeight / 2 - 80,
-                    bgColor: '#8b5cf6',
+                    bgColor: '#6366f1',
                     textColor: '#ffffff',
                     isBold: true,
                     isItalic: false,
-                    isRoot: true,
-                    imageUrl: null
+                    isRoot: true
                 }
             ];
             state.selectedNodeId = state.nodes[0].id;
@@ -492,7 +313,6 @@
 
             updateConnections();
             updateSidebarInputs();
-            updateAIToolbarPosition();
         }
 
         function createNodeElement(node) {
@@ -507,32 +327,42 @@
             el.style.fontWeight = node.isBold ? 'bold' : 'normal';
             el.style.fontStyle = node.isItalic ? 'italic' : 'normal';
 
-            let imageHtml = '';
-            if (node.imageUrl) {
-                imageHtml = `<img src="${node.imageUrl}" class="w-full h-24 object-cover rounded-lg mb-2 pointer-events-none border border-black/10" alt="Imagem IA" />`;
-            }
-
             el.innerHTML = `
-                ${imageHtml}
-                <div class="pointer-events-none text-sm leading-snug">${escapeHtml(node.text)}</div>
+                <div class="node-text text-sm leading-snug outline-none min-w-[20px]" contenteditable="true" spellcheck="false">${escapeHtml(node.text)}</div>
             `;
+
+            const textEl = el.querySelector('.node-text');
+
+            // Edição em tempo real dentro do balão
+            textEl.addEventListener('input', (e) => {
+                node.text = e.target.innerText;
+                updateConnections();
+            });
+
+            textEl.addEventListener('blur', () => {
+                saveStateToLocal();
+            });
+
+            textEl.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    textEl.blur();
+                }
+            });
 
             el.addEventListener('mousedown', (e) => {
                 if (e.button !== 0) return;
                 e.stopPropagation();
                 selectNode(node.id);
                 
-                state.isDraggingNode = true;
-                state.draggedNodeId = node.id;
-                state.dragOffset = {
-                    x: (e.clientX / state.zoom) - node.x,
-                    y: (e.clientY / state.zoom) - node.y
-                };
-            });
-
-            el.addEventListener('dblclick', (e) => {
-                e.stopPropagation();
-                openEditModal(node);
+                if (e.target !== textEl) {
+                    state.isDraggingNode = true;
+                    state.draggedNodeId = node.id;
+                    state.dragOffset = {
+                        x: (e.clientX / state.zoom) - node.x,
+                        y: (e.clientY / state.zoom) - node.y
+                    };
+                }
             });
 
             return el;
@@ -582,23 +412,12 @@
             svgCanvas.style.transform = `translate(${state.pan.x}px, ${state.pan.y}px) scale(${state.zoom})`;
         }
 
-        function updateAIToolbarPosition() {
-            if (!state.selectedNodeId) {
-                aiToolbar.classList.add('opacity-0', 'pointer-events-none', '-translate-y-2');
-                aiToolbar.classList.remove('opacity-100', 'pointer-events-auto', 'translate-y-0');
-                return;
-            }
-
-            aiToolbar.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-2');
-            aiToolbar.classList.add('opacity-100', 'pointer-events-auto', 'translate-y-0');
-        }
-
         function selectNode(id) {
+            if (state.selectedNodeId === id) return;
             state.selectedNodeId = id;
             render();
         }
 
-        // ADICIONAR BALÃO PRINCIPAL (NOVO)
         function addRootNode(customText) {
             const newId = 'root_' + Date.now();
             const newNode = {
@@ -607,12 +426,11 @@
                 text: customText || 'Novo Balão Principal',
                 x: (window.innerWidth / 2 - 80) + (Math.random() * 60 - 30),
                 y: (window.innerHeight / 2 - 80) + (Math.random() * 60 - 30),
-                bgColor: '#8b5cf6',
+                bgColor: '#6366f1',
                 textColor: '#ffffff',
                 isBold: true,
                 isItalic: false,
-                isRoot: true,
-                imageUrl: null
+                isRoot: true
             };
 
             state.nodes.push(newNode);
@@ -622,7 +440,6 @@
             return newNode;
         }
 
-        // ADICIONAR FILHO (Se nenhum balão estiver selecionado ou existirem 0 nós, cria um principal)
         function addChildNode(customText, parentId) {
             let targetParentId = parentId || state.selectedNodeId;
             
@@ -646,8 +463,7 @@
                 bgColor: '#ffffff',
                 textColor: '#1e293b',
                 isBold: false,
-                isItalic: false,
-                imageUrl: null
+                isItalic: false
             };
 
             state.nodes.push(newNode);
@@ -678,8 +494,7 @@
                 bgColor: '#ffffff',
                 textColor: '#1e293b',
                 isBold: false,
-                isItalic: false,
-                imageUrl: null
+                isItalic: false
             };
 
             state.nodes.push(newNode);
@@ -687,7 +502,6 @@
             saveStateToLocal();
         }
 
-        // APAGAR QUALQUER BALÃO (Com suporte a apagar nós raiz/principais)
         function deleteSelectedNode() {
             if (!state.selectedNodeId) return;
 
@@ -716,325 +530,6 @@
             state.zoom = 1;
             state.pan = { x: 0, y: 0 };
             updateTransform();
-        }
-
-        // RECURSOS DE IA
-        async function generateFullMapWithAI() {
-            const promptInput = document.getElementById('input-ai-prompt');
-            const userPrompt = promptInput.value.trim();
-            
-            if (!userPrompt) {
-                showToast('Por favor, digite um assunto para a IA gerar o mapa.', 'fa-circle-exclamation');
-                return;
-            }
-
-            const statusEl = document.getElementById('ai-map-status');
-            const submitBtn = document.getElementById('btn-submit-ai-map');
-            
-            statusEl.classList.remove('hidden');
-            submitBtn.disabled = true;
-            submitBtn.classList.add('opacity-50');
-
-            const systemInstruction = "Você é um mestre em síntese do conhecimento e mapas mentais. Dado o objetivo do usuário, crie um mapa mental hierárquico bem estruturado, rico em detalhes e fácil de entender.";
-            const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent";
-            
-            const payload = {
-                contents: [{ parts: [{ text: `Crie um mapa mental detalhado sobre o tema: "${userPrompt}"` }] }],
-                systemInstruction: { parts: [{ text: systemInstruction }] },
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: "OBJECT",
-                        properties: {
-                            "title": { "type": "STRING" },
-                            "root": {
-                                "type": "OBJECT",
-                                "properties": {
-                                    "text": { "type": "STRING" },
-                                    "children": {
-                                        "type": "ARRAY",
-                                        "items": {
-                                            "type": "OBJECT",
-                                            "properties": {
-                                                "text": { "type": "STRING" },
-                                                "children": {
-                                                    "type": "ARRAY",
-                                                    "items": {
-                                                        "type": "OBJECT",
-                                                        "properties": {
-                                                            "text": { "type": "STRING" }
-                                                        },
-                                                        "required": ["text"]
-                                                    }
-                                                }
-                                            },
-                                            "required": ["text"]
-                                        }
-                                    }
-                                },
-                                "required": ["text"]
-                            }
-                        },
-                        "required": ["title", "root"]
-                    }
-                }
-            };
-
-            try {
-                const response = await callGeminiApi(apiUrl, payload);
-                const jsonText = response?.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (!jsonText) throw new Error("A IA não retornou um formato válido.");
-
-                const mapData = JSON.parse(jsonText);
-                
-                document.getElementById('map-title').value = mapData.title || userPrompt;
-                state.nodes = [];
-
-                const centerX = window.innerWidth / 2 - 80;
-                const centerY = window.innerHeight / 2 - 80;
-
-                const rootId = 'root_' + Date.now();
-                const rootNode = {
-                    id: rootId,
-                    parentId: null,
-                    text: mapData.root.text,
-                    x: centerX,
-                    y: centerY,
-                    bgColor: '#8b5cf6',
-                    textColor: '#ffffff',
-                    isBold: true,
-                    isItalic: false,
-                    isRoot: true,
-                    imageUrl: null
-                };
-                state.nodes.push(rootNode);
-
-                if (mapData.root.children && Array.isArray(mapData.root.children)) {
-                    const totalLevel1 = mapData.root.children.length;
-                    
-                    mapData.root.children.forEach((c1, idx1) => {
-                        const isRight = idx1 % 2 === 0;
-                        const sideIndex = Math.floor(idx1 / 2);
-                        const xOffset = isRight ? 240 : -240;
-                        const yOffset = (sideIndex - (totalLevel1 / 4)) * 140;
-
-                        const node1 = {
-                            id: `ai_n1_${idx1}`,
-                            parentId: rootId,
-                            text: c1.text,
-                            x: centerX + xOffset,
-                            y: centerY + yOffset,
-                            bgColor: isRight ? '#0ea5e9' : '#10b981',
-                            textColor: '#ffffff',
-                            isBold: true,
-                            isItalic: false,
-                            imageUrl: null
-                        };
-                        state.nodes.push(node1);
-
-                        if (c1.children && Array.isArray(c1.children)) {
-                            c1.children.forEach((c2, idx2) => {
-                                const subXOffset = isRight ? 220 : -220;
-                                const subYOffset = (idx2 - Math.floor(c1.children.length / 2)) * 60;
-
-                                state.nodes.push({
-                                    id: `ai_n2_${idx1}_${idx2}`,
-                                    parentId: node1.id,
-                                    text: c2.text,
-                                    x: node1.x + subXOffset,
-                                    y: node1.y + subYOffset,
-                                    bgColor: '#ffffff',
-                                    textColor: '#1e293b',
-                                    isBold: false,
-                                    isItalic: false,
-                                    imageUrl: null
-                                });
-                            });
-                        }
-                    });
-                }
-
-                state.selectedNodeId = rootId;
-                render();
-                centerMap();
-                saveStateToLocal();
-                closeAiMapModal();
-                showToast('Mapa mental gerado com sucesso pela IA!', 'fa-circle-check');
-
-            } catch (err) {
-                showToast('Erro ao gerar mapa com IA: ' + err.message, 'fa-triangle-exclamation');
-            } finally {
-                statusEl.classList.add('hidden');
-                submitBtn.disabled = false;
-                submitBtn.classList.remove('opacity-50');
-            }
-        }
-
-        async function expandNodeWithAI() {
-            const node = getSelectedNode();
-            if (!node) return;
-
-            const nodeEl = document.getElementById(`node-${node.id}`);
-            if (nodeEl) nodeEl.classList.add('ai-generating');
-
-            showToast(`A IA está gerando sub-ideias para "${node.text}"...`, 'fa-wand-magic-sparkles');
-            const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent";
-
-            const payload = {
-                contents: [{ parts: [{ text: `Gere de 3 a 5 tópicos filhos diretos para expandir a seguinte ideia de um mapa mental: "${node.text}". Seja conciso e direto ao ponto.` }] }],
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: "ARRAY",
-                        items: { type: "STRING" }
-                    }
-                }
-            };
-
-            try {
-                const response = await callGeminiApi(apiUrl, payload);
-                const jsonText = response?.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (!jsonText) throw new Error("Não foi possível gerar sub-tópicos.");
-
-                const subtopics = JSON.parse(jsonText);
-                subtopics.forEach(subtext => addChildNode(subtext, node.id));
-
-                render();
-                saveStateToLocal();
-                showToast(`${subtopics.length} novos tópicos adicionados com IA!`, 'fa-circle-check');
-
-            } catch (err) {
-                showToast('Erro ao expandir nó: ' + err.message, 'fa-triangle-exclamation');
-            } finally {
-                if (nodeEl) nodeEl.classList.remove('ai-generating');
-            }
-        }
-
-        async function explainNodeWithAI() {
-            const node = getSelectedNode();
-            if (!node) return;
-
-            const modal = document.getElementById('modal-ai-explain');
-            const titleEl = document.getElementById('explain-title');
-            const loadingEl = document.getElementById('explain-loading');
-            const contentEl = document.getElementById('explain-content');
-            const convertBtn = document.getElementById('btn-convert-explain-to-nodes');
-
-            titleEl.textContent = `Explicação: ${node.text}`;
-            modal.classList.remove('hidden');
-            loadingEl.classList.remove('hidden');
-            contentEl.classList.add('hidden');
-            convertBtn.classList.add('hidden');
-
-            const systemInstruction = "Você é um tutor educacional didático e conciso. Forneça um resumo explicativo sobre o tópico informado, usando tópicos claros e linguagem acessível.";
-            const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent";
-
-            const payload = {
-                contents: [{ parts: [{ text: `Explique detalhadamente o tópico "${node.text}" com conceitos-chave e uma conclusão prática.` }] }],
-                systemInstruction: { parts: [{ text: systemInstruction }] }
-            };
-
-            try {
-                const response = await callGeminiApi(apiUrl, payload);
-                const textResult = response?.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (!textResult) throw new Error("Não foi possível obter a explicação.");
-
-                state.lastGeneratedExplanation = { nodeId: node.id, nodeText: node.text, rawText: textResult };
-
-                const formattedHtml = textResult
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                    .replace(/\n\n/g, '</p><p class="mt-2">')
-                    .replace(/\n-/g, '<br/>• ');
-
-                contentEl.innerHTML = `<p>${formattedHtml}</p>`;
-                loadingEl.classList.add('hidden');
-                contentEl.classList.remove('hidden');
-                convertBtn.classList.remove('hidden');
-
-            } catch (err) {
-                loadingEl.classList.add('hidden');
-                contentEl.classList.remove('hidden');
-                contentEl.innerHTML = `<p class="text-rose-600 font-semibold"><i class="fa-solid fa-triangle-exclamation"></i> ${err.message}</p>`;
-            }
-        }
-
-        function convertExplanationToNodes() {
-            if (!state.lastGeneratedExplanation) return;
-
-            const { nodeId, rawText } = state.lastGeneratedExplanation;
-            const lines = rawText.split('\n').map(l => l.replace(/^[•\*\-\d\.\s]+/, '').trim()).filter(l => l.length > 5 && l.length < 80);
-            const uniqueTopics = Array.from(new Set(lines)).slice(0, 5);
-
-            uniqueTopics.forEach(t => addChildNode(t, nodeId));
-
-            render();
-            saveStateToLocal();
-            document.getElementById('modal-ai-explain').classList.add('hidden');
-            showToast(`${uniqueTopics.length} pontos anexados como nós!`, 'fa-circle-check');
-        }
-
-        async function generateImageForNode() {
-            const node = getSelectedNode();
-            if (!node) return;
-
-            const inputPrompt = document.getElementById('input-image-prompt');
-            const previewImg = document.getElementById('generated-img-preview');
-            const placeholder = document.getElementById('image-placeholder-text');
-            const overlay = document.getElementById('image-loading-overlay');
-            const attachBtn = document.getElementById('btn-attach-image');
-
-            const promptText = inputPrompt.value.trim() || `Icon for ${node.text}`;
-
-            overlay.classList.remove('hidden');
-            state.tempGeneratedImageData = null;
-
-            const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-image:generateContent";
-            const payload = {
-                contents: [{ parts: [{ text: `A clean, modern, flat or 3D minimalist icon illustration of: ${promptText}. High resolution, isolated element style.` }] }],
-                generationConfig: { responseModalities: ["TEXT", "IMAGE"] }
-            };
-
-            try {
-                const response = await callGeminiApi(apiUrl, payload);
-                const base64Data = response?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
-                if (!base64Data) throw new Error("A IA não gerou uma imagem válida.");
-
-                const imgUrl = `data:image/png;base64,${base64Data}`;
-                state.tempGeneratedImageData = imgUrl;
-
-                previewImg.src = imgUrl;
-                previewImg.classList.remove('hidden');
-                placeholder.classList.add('hidden');
-                attachBtn.classList.remove('hidden');
-                showToast('Imagem gerada com sucesso!', 'fa-circle-check');
-
-            } catch (err) {
-                showToast('Erro ao gerar imagem: ' + err.message, 'fa-triangle-exclamation');
-            } finally {
-                overlay.classList.add('hidden');
-            }
-        }
-
-        function attachGeneratedImageToNode() {
-            const node = getSelectedNode();
-            if (node && state.tempGeneratedImageData) {
-                node.imageUrl = state.tempGeneratedImageData;
-                render();
-                saveStateToLocal();
-                document.getElementById('modal-ai-image').classList.add('hidden');
-                showToast('Imagem anexada ao nó!', 'fa-circle-check');
-            }
-        }
-
-        function removeNodeImage() {
-            const node = getSelectedNode();
-            if (node) {
-                node.imageUrl = null;
-                render();
-                saveStateToLocal();
-                showToast('Imagem removida do nó.');
-            }
         }
 
         function setupEventListeners() {
@@ -1090,12 +585,6 @@
             document.getElementById('btn-zoom-out').onclick = () => { state.zoom = Math.max(state.zoom - 0.15, 0.3); updateTransform(); };
             document.getElementById('btn-zoom-reset').onclick = centerMap;
 
-            // IA HANDLERS
-            document.getElementById('btn-ai-generate-map').onclick = openAiMapModal;
-            document.getElementById('btn-ai-expand').onclick = expandNodeWithAI;
-            document.getElementById('btn-ai-explain').onclick = explainNodeWithAI;
-            document.getElementById('btn-ai-image').onclick = openAiImageModal;
-
             // SIDEBAR TOGGLE
             const sidebarEl = document.getElementById('sidebar');
             document.getElementById('btn-toggle-sidebar').onclick = () => sidebarEl.classList.toggle('translate-x-full');
@@ -1140,8 +629,6 @@
                 }
             };
 
-            document.getElementById('btn-remove-node-image').onclick = removeNodeImage;
-
             document.getElementById('canvas-bg-color').addEventListener('input', (e) => {
                 state.canvasBgColor = e.target.value;
                 document.getElementById('canvas-bg-hex').textContent = e.target.value.toUpperCase();
@@ -1159,7 +646,7 @@
 
             // ATALHOS DE TECLADO
             window.addEventListener('keydown', (e) => {
-                if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+                if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) || document.activeElement.getAttribute('contenteditable') === 'true') return;
 
                 if (e.key === 'Tab') {
                     e.preventDefault();
@@ -1190,28 +677,7 @@
             document.getElementById('btn-export-json').onclick = exportJSON;
             document.getElementById('input-import-json').addEventListener('change', importJSON);
             document.getElementById('btn-export-png').onclick = exportPNG;
-
-            // MODALS HANDLERS
-            document.getElementById('btn-cancel-modal').onclick = closeEditModal;
-            document.getElementById('btn-save-modal').onclick = saveEditModal;
             document.getElementById('map-title').addEventListener('change', saveStateToLocal);
-
-            document.getElementById('btn-close-modal-ai-map').onclick = closeAiMapModal;
-            document.getElementById('btn-cancel-ai-map').onclick = closeAiMapModal;
-            document.getElementById('btn-submit-ai-map').onclick = generateFullMapWithAI;
-
-            document.getElementById('btn-close-modal-explain').onclick = () => document.getElementById('modal-ai-explain').classList.add('hidden');
-            document.getElementById('btn-close-explain-modal').onclick = () => document.getElementById('modal-ai-explain').classList.add('hidden');
-            document.getElementById('btn-convert-explain-to-nodes').onclick = convertExplanationToNodes;
-
-            document.getElementById('btn-close-modal-image').onclick = () => document.getElementById('modal-ai-image').classList.add('hidden');
-            document.getElementById('btn-cancel-image').onclick = () => document.getElementById('modal-ai-image').classList.add('hidden');
-            document.getElementById('btn-generate-image-action').onclick = generateImageForNode;
-            document.getElementById('btn-attach-image').onclick = attachGeneratedImageToNode;
-
-            document.querySelectorAll('.ai-chip').forEach(chip => {
-                chip.onclick = () => { document.getElementById('input-ai-prompt').value = chip.textContent; };
-            });
         }
 
         function getSelectedNode() {
@@ -1220,60 +686,12 @@
 
         function updateSidebarInputs() {
             const node = getSelectedNode();
-            const removeImgBtn = document.getElementById('btn-remove-node-image');
-            
             if (node) {
                 document.getElementById('node-bg-color').value = node.bgColor;
                 document.getElementById('node-bg-hex').textContent = node.bgColor.toUpperCase();
                 document.getElementById('node-text-color').value = node.textColor;
                 document.getElementById('node-text-hex').textContent = node.textColor.toUpperCase();
-                
-                if (node.imageUrl) removeImgBtn.classList.remove('hidden');
-                else removeImgBtn.classList.add('hidden');
             }
-        }
-
-        function openEditModal(node) {
-            const modal = document.getElementById('modal-edit');
-            const input = document.getElementById('modal-text-input');
-            input.value = node.text;
-            modal.classList.remove('hidden');
-            input.focus();
-        }
-
-        function closeEditModal() {
-            document.getElementById('modal-edit').classList.add('hidden');
-        }
-
-        function saveEditModal() {
-            const node = getSelectedNode();
-            const input = document.getElementById('modal-text-input');
-            if (node && input.value.trim() !== '') {
-                node.text = input.value.trim();
-                render();
-                saveStateToLocal();
-            }
-            closeEditModal();
-        }
-
-        function openAiMapModal() {
-            document.getElementById('modal-ai-map').classList.remove('hidden');
-            document.getElementById('input-ai-prompt').focus();
-        }
-
-        function closeAiMapModal() {
-            document.getElementById('modal-ai-map').classList.add('hidden');
-        }
-
-        function openAiImageModal() {
-            const node = getSelectedNode();
-            if (!node) return;
-
-            document.getElementById('input-image-prompt').value = `Ícone para ${node.text}`;
-            document.getElementById('generated-img-preview').classList.add('hidden');
-            document.getElementById('image-placeholder-text').classList.remove('hidden');
-            document.getElementById('btn-attach-image').classList.add('hidden');
-            document.getElementById('modal-ai-image').classList.remove('hidden');
         }
 
         function saveStateToLocal() {
@@ -1283,11 +701,11 @@
                 canvasBgColor: state.canvasBgColor,
                 gridStyle: state.gridStyle
             };
-            localStorage.setItem('mindmap_pro_ai_data', JSON.stringify(data));
+            localStorage.setItem('mindmap_pro_data', JSON.stringify(data));
         }
 
         function loadSavedState() {
-            const saved = localStorage.getItem('mindmap_pro_ai_data');
+            const saved = localStorage.getItem('mindmap_pro_data');
             if (saved) {
                 try {
                     const data = JSON.parse(saved);
