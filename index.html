@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Mapa Mental Privado</title>
-    <!-- Biblioteca que desenha o mapa na tela -->
-    <script type="text/javascript" src="https://unpkg.com"></script>
+    <!-- Biblioteca Vis.js para renderização do mapa -->
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -19,20 +19,30 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
-        /* Painel Superior Profissional */
+        
+        /* Painel Superior */
         #header {
             background-color: #1e1e2f;
             color: white;
             padding: 15px 20px;
             display: flex;
-            gap: 15px;
+            gap: 12px;
             align-items: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            height: 75px;
+            min-height: 75px;
             width: 100%;
             z-index: 100;
+            transition: transform 0.3s ease, margin-top 0.3s ease;
+            flex-wrap: wrap;
         }
+
+        #header.oculto {
+            margin-top: -90px;
+            pointer-events: none;
+        }
+
         h2 {
             margin: 0;
             font-size: 18px;
@@ -43,7 +53,7 @@
             width: 1px;
             height: 30px;
             background-color: #3d3d5c;
-            margin: 0 5px;
+            margin: 0 4px;
         }
         .grupo-controle {
             display: flex;
@@ -53,9 +63,10 @@
             color: #a0a0b0;
             font-weight: bold;
         }
+
         /* Inputs e Controles */
         input, select {
-            padding: 10px 12px;
+            padding: 9px 12px;
             border-radius: 8px;
             border: 1px solid #3d3d5c;
             background-color: #2b2b3d;
@@ -63,15 +74,15 @@
             font-size: 14px;
             outline: none;
         }
-        input { width: 180px; }
+        input { width: 170px; }
         select { cursor: pointer; }
         
         /* Botões */
         button {
-            padding: 10px 16px;
+            padding: 9px 14px;
             border-radius: 8px;
             border: none;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -89,11 +100,30 @@
         button.delete { background-color: #e74c3c; color: white; }
         button.delete:hover { background-color: #c0392b; transform: translateY(-1px); }
 
+        button.clear { background-color: #8e44ad; color: white; }
+        button.clear:hover { background-color: #9b59b6; transform: translateY(-1px); }
+
+        button.toggle-btn { background-color: #555577; color: white; }
+        button.toggle-btn:hover { background-color: #666688; }
+
+        /* Botão Flutuante para Abrir Painel */
+        #btn-abrir-painel {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            z-index: 90;
+            background-color: #1e1e2f;
+            color: white;
+            border: 1px solid #3d3d5c;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            display: none;
+        }
+
         /* Tela do Mapa */
         #mapa-container {
             flex: 1;
             width: 100%;
-            background-color: #ffffff; /* Cor padrão inicial */
+            background-color: #ffffff;
             background-image: radial-gradient(rgba(0,0,0,0.1) 1px, transparent 1px);
             background-size: 25px 25px;
             transition: background-color 0.3s ease;
@@ -102,6 +132,9 @@
 </head>
 <body>
 
+    <!-- Botão flutuante caso o painel seja ocultado -->
+    <button id="btn-abrir-painel" onclick="alternarPainel()">⚙️ Mostrar Painel</button>
+
     <div id="header">
         <h2>🧠 Mapa Creator</h2>
         <div class="divisor"></div>
@@ -109,7 +142,7 @@
         <!-- Criar Tópicos -->
         <input type="text" id="texto-no" placeholder="Nome do novo plano...">
         
-        <!-- Seletor de Cores do Tópico -->
+        <!-- Seletor de Cores do Balão -->
         <div class="grupo-controle">
             <span>Borda:</span>
             <select id="cor-seletor">
@@ -132,7 +165,7 @@
         <div class="grupo-controle">
             <span>🎨 Fundo:</span>
             <select id="fundo-seletor" onchange="mudarCorFundo()">
-                <option value="#ffffff">Claro (Branco)</option>
+                <option value="#ffffff">Branco</option>
                 <option value="#f4f7f6">Cinza Claro</option>
                 <option value="#e8f4fd">Azul Soft</option>
                 <option value="#1e1e2f">Escuro (Dark)</option>
@@ -143,16 +176,20 @@
 
         <div class="divisor"></div>
         
-        <!-- Editar Tópicos Existentes -->
+        <!-- Edição e Ações -->
         <button class="edit" onclick="editarNo()">✏️ Renomear</button>
         <button class="delete" onclick="removerNo()">❌ Apagar</button>
+        <button class="clear" onclick="limparTudo()">🗑️ Limpar Tudo</button>
+        
+        <div class="divisor"></div>
+        <button class="toggle-btn" onclick="alternarPainel()">👁️ Ocultar Painel</button>
     </div>
 
     <!-- Container do Mapa -->
     <div id="mapa-container"></div>
 
     <script>
-        // Inicializa com o nó do centro
+        // Inicializa o nó central
         let nodes = new vis.DataSet([
             { 
                 id: 1, 
@@ -168,7 +205,6 @@
         let container = document.getElementById('mapa-container');
         let data = { nodes: nodes, edges: edges };
         
-        // Estilos de design do mapa
         let options = {
             nodes: {
                 shape: 'box',
@@ -197,19 +233,27 @@
         let network = new vis.Network(container, data, options);
         let proximoId = 2;
 
-        // Função para Adicionar nós com cores personalizadas
+        // Permite adicionar o balão ao pressionar ENTER no input
+        document.getElementById('texto-no').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                adicionarNo();
+            }
+        });
+
+        // Adicionar novos tópicos
         function adicionarNo() {
-            let texto = document.getElementById('texto-no').value;
+            let textoInput = document.getElementById('texto-no');
+            let texto = textoInput.value;
             let corEscolhida = document.getElementById('cor-seletor').value;
             
             if (texto.trim() === "") return alert("Digite um texto para o balão!");
 
             let selecionado = network.getSelectedNodes();
             if (selecionado.length === 0) {
-                return alert("Clique em um balão na tela para conectá-lo ao seu novo tópico!");
+                return alert("Clique em um balão existente na tela para conectá-lo ao novo tópico!");
             }
 
-            let paiId = selecionado;
+            let paiId = selecionado[0];
 
             nodes.add({ 
                 id: proximoId, 
@@ -224,18 +268,16 @@
             edges.add({ from: paiId, to: proximoId, color: { color: corEscolhida, highlight: corEscolhida } });
 
             proximoId++;
-            document.getElementById('texto-no').value = "";
+            textoInput.value = "";
         }
 
-        // Nova Função: Muda a cor do fundo e ajusta os pontinhos da grade
+        // Mudar a cor de fundo da área de trabalho
         function mudarCorFundo() {
             let corFundo = document.getElementById('fundo-seletor').value;
             let containerElement = document.getElementById('mapa-container');
             
-            // Aplica a cor selecionada
             containerElement.style.backgroundColor = corFundo;
             
-            // Se o fundo for escuro, muda a cor dos pontos da grade para branco translúcido
             if (corFundo === "#1e1e2f" || corFundo === "#111116" || corFundo === "#2c3e50") {
                 containerElement.style.backgroundImage = "radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px)";
             } else {
@@ -243,25 +285,69 @@
             }
         }
 
-        // Função para editar o texto de qualquer balão
+        // Editar texto pelo botão
         function editarNo() {
             let selecionado = network.getSelectedNodes();
             if (selecionado.length === 0) return alert("Clique primeiro no balão que você quer editar!");
-            
-            let noId = selecionado;
-            let noAtual = nodes.get(noId);
-            
-            let novoTexto = prompt("Digite o novo nome para este balão:", noAtual.label.trim());
-            if (novoTexto === null || novoTexto.trim() === "") return;
-            
-            nodes.update({ id: noId, label: ' ' + novoTexto + ' ' });
+            abrirEdicaoTexto(selecionado[0]);
         }
 
-        // Função para apagar tópicos
+        // Duplo clique direto no balão para editar seu texto na hora
+        network.on("doubleClick", function (params) {
+            if (params.nodes.length > 0) {
+                abrirEdicaoTexto(params.nodes[0]);
+            }
+        });
+
+        // Caixa de texto para renomear
+        function abrirEdicaoTexto(noId) {
+            let noAtual = nodes.get(noId);
+            let novoTexto = prompt("Digite o novo texto para este balão:", noAtual.label.trim());
+            if (novoTexto !== null && novoTexto.trim() !== "") {
+                nodes.update({ id: noId, label: ' ' + novoTexto + ' ' });
+            }
+        }
+
+        // Apagar um único balão selecionado
         function removerNo() {
             let selecionado = network.getSelectedNodes();
             if (selecionado.length === 0) return alert("Clique no balão que quer apagar!");
-            if (selecionado === 1) return alert("Você não pode apagar o seu ponto central!");
             
-            nodes.remove({ id: selecionado });
+            nodes.remove({ id: selecionado[0] });
         }
+
+        // Apagar Todos os Balões (Reset)
+        function limparTudo() {
+            if (confirm("Deseja mesmo apagar todos os balões e reiniciar o mapa?")) {
+                nodes.clear();
+                edges.clear();
+                
+                // Recria apenas o balão inicial
+                nodes.add({ 
+                    id: 1, 
+                    label: ' ESTUDOS ', 
+                    color: { background: '#2c3e50', border: '#2c3e50' }, 
+                    font: { color: '#ffffff', size: 20, bold: true }, 
+                    shape: 'box',
+                    margin: 15
+                });
+                proximoId = 2;
+            }
+        }
+
+        // Esconder / Mostrar Painel
+        function alternarPainel() {
+            let header = document.getElementById('header');
+            let btnAbrir = document.getElementById('btn-abrir-painel');
+            
+            if (header.classList.contains('oculto')) {
+                header.classList.remove('oculto');
+                btnAbrir.style.display = 'none';
+            } else {
+                header.classList.add('oculto');
+                btnAbrir.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>
